@@ -21,13 +21,13 @@ namespace DairySync
         private void insertarProductos()
         {
             string query = "SELECT id_producto, descripcion, stock, precio FROM productos";
-            using (MySqlConnection conexion = ConexionBD.Instancia.ObtenerConexion())
-            {
+            MySqlConnection conexion = ConexionBD.Instancia.ObtenerConexion();
+            
                 MySqlDataAdapter adapter = new MySqlDataAdapter(query, conexion);
                 DataTable dataTable = new DataTable();
                 adapter.Fill(dataTable);
                 dataGridView1.DataSource = dataTable;
-            }
+            
         }
 
 
@@ -63,6 +63,11 @@ namespace DairySync
         private void button1_Click(object sender, EventArgs e)
         {
             
+
+
+
+
+
         }
 
         private void Form7_Load(object sender, EventArgs e)
@@ -104,8 +109,8 @@ namespace DairySync
 
         private void button3_Click(object sender, EventArgs e)
         {
-            Form4 f4 = new Form4();
-            f4.Show(); this.Hide();
+            Form3 f3 = new Form3();
+            f3.Show(); this.Close();
         }
     } 
             

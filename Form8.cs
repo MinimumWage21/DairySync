@@ -84,7 +84,7 @@ namespace DairySync
         private void button1_Click(object sender, EventArgs e)
         {
             Form4 f4 = new Form4();
-            f4.Show(); this.Hide();
+            f4.Show(); this.Close();
         }
     }
                 
