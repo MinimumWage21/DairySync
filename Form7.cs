@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -18,16 +19,59 @@ namespace DairySync
 
 
 
+
+
+
+
+
+
+
+
+
+        private int ObtenerIdProducto(string descripcion)
+        {
+            MySqlConnection conexion = conexionBD.ObtenerConexion();
+
+            string query = "SELECT id_producto FROM productos WHERE descripcion = @descripcion";
+            MySqlCommand cmd = new MySqlCommand(query, conexion);
+            cmd.Parameters.AddWithValue("@descripcion", descripcion);
+
+
+            object result = cmd.ExecuteScalar();
+            if (result != null)
+            {
+                return Convert.ToInt32(result);
+            }
+            else
+            {
+                throw new Exception("Producto no encontrado.");
+            }
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         private void insertarProductos()
         {
             string query = "SELECT id_producto, descripcion, stock, precio FROM productos";
             MySqlConnection conexion = ConexionBD.Instancia.ObtenerConexion();
-            
-                MySqlDataAdapter adapter = new MySqlDataAdapter(query, conexion);
-                DataTable dataTable = new DataTable();
-                adapter.Fill(dataTable);
-                dataGridView1.DataSource = dataTable;
-            
+
+            MySqlDataAdapter adapter = new MySqlDataAdapter(query, conexion);
+            DataTable dataTable = new DataTable();
+            adapter.Fill(dataTable);
+            dataGridView1.DataSource = dataTable;
+
         }
 
 
@@ -53,22 +97,114 @@ namespace DairySync
 
 
 
-            public Form7()
+        public Form7()
         {
-            
             InitializeComponent();
-            
+            dataGridView2.Columns.Add("descripcion", "Descripción");
+            dataGridView2.Columns.Add("cantidad", "Cantidad");
+            dataGridView2.Columns.Add("precio", "Precio");
+
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            
+            // Verificar si hay filas en el DataGridView
+            if (dataGridView2.Rows.Count == 0 || dataGridView2.Rows.Cast<DataGridViewRow>().All(row => row.IsNewRow))
+            {
+                MessageBox.Show("No hay filas seleccionadas para procesar la venta.");
+                return;
+            }
+            MySqlTransaction transaccion = null;
+            decimal totalCobrado = 0;
+            MySqlConnection conexion = conexionBD.ObtenerConexion();
 
+            try
+            {
+                transaccion = conexion.BeginTransaction();
+
+                // Lista para almacenar todos los id_venta generados
+                List<int> idVentas = new List<int>();
+
+                foreach (DataGridViewRow row in dataGridView2.Rows)
+                {
+                    if (row.Cells["descripcion"].Value != null && row.Cells["cantidad"].Value != null && row.Cells["precio"].Value != null)
+                    {
+                        string descripcion = row.Cells["descripcion"].Value.ToString();
+                        int cantidad = Convert.ToInt32(row.Cells["cantidad"].Value);
+                        decimal precio = Convert.ToDecimal(row.Cells["precio"].Value);
+
+                        int idProducto = ObtenerIdProducto(descripcion);
+
+                        decimal ingresoVenta = cantidad * precio;
+
+                        // Insertar venta en la tabla ventas
+                        string queryVenta = "INSERT INTO ventas (id_producto, ingreso_venta, cant_vendida) VALUES (@idProducto, @ingresoVenta, @cantidad)";
+                        MySqlCommand cmdVenta = new MySqlCommand(queryVenta, conexion, transaccion);
+                        cmdVenta.Parameters.AddWithValue("@idProducto", idProducto);
+                        cmdVenta.Parameters.AddWithValue("@ingresoVenta", ingresoVenta);
+                        cmdVenta.Parameters.AddWithValue("@cantidad", cantidad);
+                        cmdVenta.ExecuteNonQuery();
+
+                        // Obtener el id_venta recién insertado
+                        int idVenta = (int)cmdVenta.LastInsertedId;
+                        idVentas.Add(idVenta);
+
+                        // Actualizar stock en la tabla productos
+                        string queryUpdateStock = "UPDATE productos SET stock = stock - @cantidad WHERE id_producto = @idProducto";
+                        MySqlCommand cmdUpdateStock = new MySqlCommand(queryUpdateStock, conexion, transaccion);
+                        cmdUpdateStock.Parameters.AddWithValue("@cantidad", cantidad);
+                        cmdUpdateStock.Parameters.AddWithValue("@idProducto", idProducto);
+                        cmdUpdateStock.ExecuteNonQuery();
+
+                        // Registrar el total cobrado
+                        totalCobrado += ingresoVenta;
+                    }
+                }
+
+                // Insertar un único registro en la tabla clientes
+                if (idVentas.Count > 0)
+                {
+                    // se usa el ultimo id_venta de la lista
+                    int ultimoIdVenta = idVentas.Last();
+
+                    string queryInsertCliente = "INSERT INTO clientes (id_venta) VALUES (@idVenta)";
+                    MySqlCommand cmdInsertCliente = new MySqlCommand(queryInsertCliente, conexion, transaccion);
+                    cmdInsertCliente.Parameters.AddWithValue("@idVenta", ultimoIdVenta);
+                    cmdInsertCliente.ExecuteNonQuery();
+                }
+
+                transaccion.Commit();
+                MessageBox.Show("Venta realizada y stock actualizado correctamente.");
+
+                // Limpiar DataGridView2 después de la venta
+                dataGridView2.Rows.Clear();
+
+                // recargar los productos en el DataGridView1 después de la venta
+                insertarProductos();
+            }
+            catch (Exception ex)
+            {
+                if (transaccion != null)
+                {
+                    transaccion.Rollback();
+                }
+                MessageBox.Show("Error al realizar la venta: " + ex.Message);
+            }
+            finally
+            {
+                if (conexion.State == System.Data.ConnectionState.Open)
+                {
+                    conexion.Close();
+                }
+            }
 
 
 
 
         }
+
+
+
 
         private void Form7_Load(object sender, EventArgs e)
         {   //Se llama a la funcion que inserta productos al datagrid una vez este cargado el formulario.
@@ -91,7 +227,7 @@ namespace DairySync
 
                 //Se obtienen los valores necesarios de la fila seleccionada
                 string nombreProducto = selectedRow.Cells["descripcion"].Value.ToString();
-                int cantidad = 1; // Aquí podrías tener una variable que represente la cantidad ordenada, pero en tu caso siempre estás añadiendo 1.
+                int cantidad = 1; 
                 decimal precio = Convert.ToDecimal(selectedRow.Cells["precio"].Value);
 
                 // Añadir fila al dataGridView2
@@ -111,6 +247,12 @@ namespace DairySync
         {
             Form3 f3 = new Form3();
             f3.Show(); this.Close();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            dataGridView2.Rows.Clear();
+            
         }
     } 
             
