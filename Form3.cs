@@ -48,5 +48,11 @@ namespace DairySync
             Form7 f7 = new Form7();
             f7.Show(); this.Hide();
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Form1 f1 = new Form1();
+            f1.Show(); this.Close();
+        }
     }
 }

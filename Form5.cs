@@ -43,35 +43,64 @@ namespace DairySync
 
         private void button1_Click(object sender, EventArgs e)
         {
-            
+
             string nombre = textBox1.Text;
-            int stock = Convert.ToInt32(textBox2.Text);
-            decimal precio = decimal.Parse(textBox4.Text);
-            int stock_min = Convert.ToInt32(textBox3.Text);
-            int id_producto = Convert.ToInt32(textBox5.Text);
-            string query = "INSERT INTO productos (id_producto,descripcion, stock,stock_min, precio) VALUES (@id_producto,@descripcion, @stock,@stock_min, @precio)";
+            int stock;
+            int stock_min;
+            decimal precio;
+            int id_producto;
 
-
+            try
             {
-                
+                // Validaciones de entrada
+                if (string.IsNullOrWhiteSpace(nombre))
                 {
-                   
-                    //obtener la conexion dentro de la variable conexion
-                    MySqlConnection conexion = ConexionBD.Instancia.ObtenerConexion();
+                    MessageBox.Show("El nombre del producto no puede estar vacío.");
+                    return;
+                }
 
+                if (!int.TryParse(textBox2.Text, out stock) || stock < 0)
+                {
+                    MessageBox.Show("El stock debe ser un número entero positivo.");
+                    return;
+                }
 
+                if (!int.TryParse(textBox3.Text, out stock_min) || stock_min < 0)
+                {
+                    MessageBox.Show("El stock mínimo debe ser un número entero positivo.");
+                    return;
+                }
+
+                if (!decimal.TryParse(textBox4.Text, out precio) || precio < 0)
+                {
+                    MessageBox.Show("El precio debe ser un número positivo.");
+                    return;
+                }
+
+                if (!int.TryParse(textBox5.Text, out id_producto) || id_producto < 0)
+                {
+                    MessageBox.Show("El ID del producto debe ser un número entero positivo.");
+                    return;
+                }
+
+                // Advertencia si el stock inicial es menor que el stock mínimo
+                if (stock < stock_min)
+                {
+                    MessageBox.Show("Advertencia: el valor del stock inicial es menor al valor mínimo.");
+                }
+
+                // Consulta para insertar el producto
+                string query = "INSERT INTO productos (id_producto, descripcion, stock, stock_min, precio) VALUES (@id_producto, @descripcion, @stock, @stock_min, @precio)";
+
+                // Obtener la conexión
+                MySqlConnection conexion = ConexionBD.Instancia.ObtenerConexion();
+                
                     
-                  
-                        conexionBD.AbrirConexion();
-                    
-
-                    // Crear el comando SQL dentro del 'using' y con 'using' para cmd
-                    MySqlCommand cmd = new MySqlCommand(query, conexion);
+                    using (MySqlCommand cmd = new MySqlCommand(query, conexion))
                     {
-                        // Agregar parámetros
+                        // Agregar parametros
                         cmd.Parameters.AddWithValue("@descripcion", nombre);
                         cmd.Parameters.AddWithValue("@stock", stock);
-
                         cmd.Parameters.AddWithValue("@stock_min", stock_min);
                         cmd.Parameters.AddWithValue("@precio", precio);
                         cmd.Parameters.AddWithValue("@id_producto", id_producto);
@@ -82,19 +111,20 @@ namespace DairySync
                         if (rowsAffected > 0)
                         {
                             MessageBox.Show("Registro insertado correctamente.");
-
                             insertarProductos();
-
-                            conexion.Close();
                         }
                         else
                         {
                             MessageBox.Show("No se pudo insertar el registro.");
                         }
                     }
-                }
-                }
-
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al insertar el registro: " + ex.Message);
+            }
+           
 
 
 
@@ -106,8 +136,13 @@ namespace DairySync
             Form4 f4 = new Form4();
             f4.Show();
             this.Close();
+            conexionBD.CerrarConexion();
         }
 
-        
+        private void textBox2_TextChanged(object sender, EventArgs e)
+        {
+            
+            
+        }
     } }
 

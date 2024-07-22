@@ -108,12 +108,13 @@ namespace DairySync
 
         private void button1_Click(object sender, EventArgs e)
         {
-            // Verificar si hay filas en el DataGridView
-            if (dataGridView2.Rows.Count == 0 || dataGridView2.Rows.Cast<DataGridViewRow>().All(row => row.IsNewRow))
+            // Verificar si hay filas en el datagrid
+            if (dataGridView2.Rows.Count == 0 || dataGridView2.Rows.Cast<DataGridViewRow>().All(row => row.IsNewRow || row.Cells["descripcion"].Value == null))
             {
                 MessageBox.Show("No hay filas seleccionadas para procesar la venta.");
                 return;
             }
+
             MySqlTransaction transaccion = null;
             decimal totalCobrado = 0;
             MySqlConnection conexion = conexionBD.ObtenerConexion();
@@ -122,50 +123,72 @@ namespace DairySync
             {
                 transaccion = conexion.BeginTransaction();
 
-                // Lista para almacenar todos los id_venta generados
-                List<int> idVentas = new List<int>();
+                // Lista para almacenar los productos con stock bajo
+                List<string> productosBajoStock = new List<string>();
 
                 foreach (DataGridViewRow row in dataGridView2.Rows)
                 {
-                    if (row.Cells["descripcion"].Value != null && row.Cells["cantidad"].Value != null && row.Cells["precio"].Value != null)
+                    // Verificar si la fila es una fila nueva o si no tiene valores validos
+                    if (row.IsNewRow || row.Cells["descripcion"].Value == null || row.Cells["cantidad"].Value == null || row.Cells["precio"].Value == null)
                     {
-                        string descripcion = row.Cells["descripcion"].Value.ToString();
-                        int cantidad = Convert.ToInt32(row.Cells["cantidad"].Value);
-                        decimal precio = Convert.ToDecimal(row.Cells["precio"].Value);
-
-                        int idProducto = ObtenerIdProducto(descripcion);
-
-                        decimal ingresoVenta = cantidad * precio;
-
-                        // Insertar venta en la tabla ventas
-                        string queryVenta = "INSERT INTO ventas (id_producto, ingreso_venta, cant_vendida) VALUES (@idProducto, @ingresoVenta, @cantidad)";
-                        MySqlCommand cmdVenta = new MySqlCommand(queryVenta, conexion, transaccion);
-                        cmdVenta.Parameters.AddWithValue("@idProducto", idProducto);
-                        cmdVenta.Parameters.AddWithValue("@ingresoVenta", ingresoVenta);
-                        cmdVenta.Parameters.AddWithValue("@cantidad", cantidad);
-                        cmdVenta.ExecuteNonQuery();
-
-                        // Obtener el id_venta recién insertado
-                        int idVenta = (int)cmdVenta.LastInsertedId;
-                        idVentas.Add(idVenta);
-
-                        // Actualizar stock en la tabla productos
-                        string queryUpdateStock = "UPDATE productos SET stock = stock - @cantidad WHERE id_producto = @idProducto";
-                        MySqlCommand cmdUpdateStock = new MySqlCommand(queryUpdateStock, conexion, transaccion);
-                        cmdUpdateStock.Parameters.AddWithValue("@cantidad", cantidad);
-                        cmdUpdateStock.Parameters.AddWithValue("@idProducto", idProducto);
-                        cmdUpdateStock.ExecuteNonQuery();
-
-                        // Registrar el total cobrado
-                        totalCobrado += ingresoVenta;
+                        continue;
                     }
+
+                    string descripcion = row.Cells["descripcion"].Value.ToString();
+                    int cantidad = Convert.ToInt32(row.Cells["cantidad"].Value);
+                    decimal precio = Convert.ToDecimal(row.Cells["precio"].Value);
+
+                    int idProducto = ObtenerIdProducto(descripcion);
+                    decimal ingresoVenta = cantidad * precio;
+
+                    // Insertar venta en la tabla ventas con la fecha actual
+                    string queryVenta = "INSERT INTO ventas (id_producto, ingreso_venta, cant_vendida, fecha) VALUES (@idProducto, @ingresoVenta, @cantidad, @fecha)";
+                    MySqlCommand cmdVenta = new MySqlCommand(queryVenta, conexion, transaccion);
+                    cmdVenta.Parameters.AddWithValue("@idProducto", idProducto);
+                    cmdVenta.Parameters.AddWithValue("@ingresoVenta", ingresoVenta);
+                    cmdVenta.Parameters.AddWithValue("@cantidad", cantidad);
+                    cmdVenta.Parameters.AddWithValue("@fecha", DateTime.Now); // Asignar la fecha actual
+                    cmdVenta.ExecuteNonQuery();
+
+                    // Obtener el stock actual y el stock minimo del producto
+                    string queryStock = "SELECT stock, stock_min FROM productos WHERE id_producto = @idProducto";
+                    MySqlCommand cmdStock = new MySqlCommand(queryStock, conexion);
+                    cmdStock.Parameters.AddWithValue("@idProducto", idProducto);
+                    MySqlDataReader reader = cmdStock.ExecuteReader();
+
+                    int stockActual = 0;
+                    int stockMinimo = 0;
+                    if (reader.Read())
+                    {
+                        stockActual = reader.GetInt32("stock");
+                        stockMinimo = reader.GetInt32("stock_min");
+                    }
+                    reader.Close();
+
+                    // Actualizar stock en la tabla productos
+                    string queryUpdateStock = "UPDATE productos SET stock = stock - @cantidad WHERE id_producto = @idProducto";
+                    MySqlCommand cmdUpdateStock = new MySqlCommand(queryUpdateStock, conexion, transaccion);
+                    cmdUpdateStock.Parameters.AddWithValue("@cantidad", cantidad);
+                    cmdUpdateStock.Parameters.AddWithValue("@idProducto", idProducto);
+                    cmdUpdateStock.ExecuteNonQuery();
+
+                    // Verificar si el stock después de la venta esta por debajo del stock mínimo
+                    if (stockActual - cantidad < stockMinimo)
+                    {
+                        productosBajoStock.Add(descripcion);
+                    }
+
+                    // Registrar el total cobrado
+                    totalCobrado += ingresoVenta;
                 }
 
                 // Insertar un único registro en la tabla clientes
-                if (idVentas.Count > 0)
+                if (dataGridView2.Rows.Count > 0)
                 {
-                    // se usa el ultimo id_venta de la lista
-                    int ultimoIdVenta = idVentas.Last();
+                    // Obtener el último id_venta generado
+                    string queryLastIdVenta = "SELECT LAST_INSERT_ID()";
+                    MySqlCommand cmdLastIdVenta = new MySqlCommand(queryLastIdVenta, conexion);
+                    int ultimoIdVenta = Convert.ToInt32(cmdLastIdVenta.ExecuteScalar());
 
                     string queryInsertCliente = "INSERT INTO clientes (id_venta) VALUES (@idVenta)";
                     MySqlCommand cmdInsertCliente = new MySqlCommand(queryInsertCliente, conexion, transaccion);
@@ -176,10 +199,17 @@ namespace DairySync
                 transaccion.Commit();
                 MessageBox.Show("Venta realizada y stock actualizado correctamente.");
 
+                // Mostrar alerta si hay productos con stock bajo
+                if (productosBajoStock.Count > 0)
+                {
+                    string mensaje = "Atención: Los siguientes productos tienen stock por debajo del mínimo:\n" + string.Join("\n", productosBajoStock);
+                    MessageBox.Show(mensaje, "Alerta de Stock Bajo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
                 // Limpiar DataGridView2 después de la venta
                 dataGridView2.Rows.Clear();
 
-                // recargar los productos en el DataGridView1 después de la venta
+                // recargar los productos en el DataGrid después de la venta
                 insertarProductos();
             }
             catch (Exception ex)
@@ -196,12 +226,11 @@ namespace DairySync
                 {
                     conexion.Close();
                 }
+
+
             }
 
-
-
-
-        }
+            }
 
 
 

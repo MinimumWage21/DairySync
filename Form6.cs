@@ -39,46 +39,67 @@ namespace DairySync
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //Se crea la variable del sp y la que obtendra el valor de la caja de texto
-            int id_producto = int.Parse(textBox1.Text);
-            string spname = "elimProductos";
+            // Verificar que la caja de texto contiene un numero entero
+            if (!int.TryParse(textBox1.Text, out int id_producto))
+            {
+                MessageBox.Show("Por favor, introduce un número entero válido para el ID del producto.");
+                return;
+            }
 
-
-
-            //Se inicia la conexion solo si no esta abierta
+            // Conectar a la base de datos
             MySqlConnection conexion = conexionBD.ObtenerConexion();
-            
             conexionBD.AbrirConexion();
 
+            try
+            {
+                
 
+                // Verificar si el producto existe en la base de datos
+                string queryCheckExistencia = "SELECT COUNT(*) FROM productos WHERE id_producto = @idProducto";
+                MySqlCommand cmdCheckExistencia = new MySqlCommand(queryCheckExistencia, conexion);
+                cmdCheckExistencia.Parameters.AddWithValue("@idProducto", id_producto);
+                int count = Convert.ToInt32(cmdCheckExistencia.ExecuteScalar());
 
+                if (count == 0)
+                {
+                    MessageBox.Show("El producto con el ID proporcionado no existe.");
+                    return;
+                }
 
+                // Eliminar el producto de la base de datos
+                string queryEliminar = "DELETE FROM productos WHERE id_producto = @idProducto";
+                MySqlCommand cmdEliminar = new MySqlCommand(queryEliminar, conexion);
+                cmdEliminar.Parameters.AddWithValue("@idProducto", id_producto);
+                int filasAfectadas = cmdEliminar.ExecuteNonQuery();
 
-         //Se crea la variable cmd que contiene la instancia del comando a la vez que se crea el comando con sus parametros correspondientes.
-         MySqlCommand cmd = new MySqlCommand(spname, conexion);
-
-         //Especificamos que es un tipo de comando stored procedure
-                    
-         cmd.CommandType = CommandType.StoredProcedure;
-         cmd.Parameters.Add(new MySqlParameter("@id_producto1", MySqlDbType.Int32)).Value = id_producto;
-
-
-         //Se ejecuta el comando de consulta que no devolvera nada y mostrara mensaje solo si afecto filas.
-         int filasafectadas = cmd.ExecuteNonQuery();
-            if (filasafectadas > 0)
-               {
-                MessageBox.Show("El producto se ha eliminado exitosamente.");
-
-                insertarProductos();
+                if (filasAfectadas > 0)
+                {
+                    MessageBox.Show("Producto eliminado exitosamente.");
+                    insertarProductos();
+                }
+                else
+                {
+                    MessageBox.Show("No se pudo eliminar el producto. Verifique el ID e intente nuevamente.");
+                }
             }
-            conexionBD.CerrarConexion();
-                    
-                    
-                    
-                    
-                
-                
-                   
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al eliminar el producto: " + ex.Message);
+            }
+            finally
+            {
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexion.Close();
+                }
+            }
+
+
+
+
+
+
+
         }
 
         private void Form6_Load(object sender, EventArgs e)
@@ -91,6 +112,11 @@ namespace DairySync
             Form4 f4 = new Form4();
             f4.Show();
             this.Close();
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -39,7 +39,7 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(126, 848);
+            this.button1.Location = new System.Drawing.Point(397, 866);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(225, 81);
             this.button1.TabIndex = 0;
@@ -60,11 +60,12 @@
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            this.textBox1.Location = new System.Drawing.Point(73, 362);
+            this.textBox1.Location = new System.Drawing.Point(83, 364);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(239, 84);
             this.textBox1.TabIndex = 2;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // label2
             // 
@@ -78,7 +79,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(438, 848);
+            this.button2.Location = new System.Drawing.Point(49, 866);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(232, 81);
             this.button2.TabIndex = 4;

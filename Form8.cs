@@ -60,7 +60,7 @@ namespace DairySync
             MySqlConnection conexion = ConexionBD.Instancia.ObtenerConexion();
 
 
-            // Crear el comando SQL con la consulta y la conexión
+            // Crear el comando SQL con la consulta y la conexion
             MySqlCommand cmd = new MySqlCommand(query, conexion);
 
             // Abrir la conexión solo si no está abierta
