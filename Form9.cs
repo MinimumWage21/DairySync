@@ -68,7 +68,7 @@ namespace DairySync
                             reader.Close();
 
                             // Verificar si el stock despues de la operacion quedara por debajo del stock minimo
-                            if (stockActual - cantidad < stockMinimo)
+                            if (stockActual - cantidad < 0)
                             {
                                 MessageBox.Show("No se puede quitar la cantidad solicitada. El stock quedaría por debajo del mínimo permitido.");
                                 return;

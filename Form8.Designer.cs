@@ -48,9 +48,7 @@
             this.comboBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 29F);
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Items.AddRange(new object[] {
-            "clientes",
             "productos",
-            "registros_venta",
             "ventas"});
             this.comboBox1.Location = new System.Drawing.Point(369, 873);
             this.comboBox1.Name = "comboBox1";

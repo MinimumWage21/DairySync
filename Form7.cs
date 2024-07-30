@@ -18,7 +18,7 @@ namespace DairySync
         ConexionBD conexionBD = ConexionBD.Instancia;
 
 
-
+       
 
 
 
@@ -126,9 +126,69 @@ namespace DairySync
                 // Lista para almacenar los productos con stock bajo
                 List<string> productosBajoStock = new List<string>();
 
+                // Verificación de stock total antes de realizar las inserciones
+                Dictionary<int, int> productosAComprar = new Dictionary<int, int>();
                 foreach (DataGridViewRow row in dataGridView2.Rows)
                 {
-                    // Verificar si la fila es una fila nueva o si no tiene valores validos
+                    // Verificar si la fila es una fila nueva o si no tiene valores válidos
+                    if (row.IsNewRow || row.Cells["descripcion"].Value == null || row.Cells["cantidad"].Value == null || row.Cells["precio"].Value == null)
+                    {
+                        continue;
+                    }
+
+                    string descripcion = row.Cells["descripcion"].Value.ToString();
+                    int cantidad = Convert.ToInt32(row.Cells["cantidad"].Value);
+
+                    int idProducto = ObtenerIdProducto(descripcion);
+
+                    // Verificar si ya hay un registro para este producto en el diccionario
+                    if (productosAComprar.ContainsKey(idProducto))
+                    {
+                        productosAComprar[idProducto] += cantidad;
+                    }
+                    else
+                    {
+                        productosAComprar[idProducto] = cantidad;
+                    }
+                }
+
+                // Verificar el stock disponible para cada producto
+                foreach (var producto in productosAComprar)
+                {
+                    int idProducto = producto.Key;
+                    int cantidadAComprar = producto.Value;
+
+                    // Obtener el stock actual del producto
+                    string queryStock = "SELECT stock FROM productos WHERE id_producto = @idProducto";
+                    MySqlCommand cmdStock = new MySqlCommand(queryStock, conexion);
+                    cmdStock.Parameters.AddWithValue("@idProducto", idProducto);
+                    MySqlDataReader reader = cmdStock.ExecuteReader();
+
+                    int stockActual = 0;
+                    if (reader.Read())
+                    {
+                        stockActual = reader.GetInt32("stock");
+                    }
+                    reader.Close();
+
+                    // Verificar si la cantidad a vender excede el stock actual
+                    if (cantidadAComprar > stockActual)
+                    {
+                        MessageBox.Show("No se puede vender más de lo que hay en stock.");
+                        transaccion.Rollback();
+                        return;
+                    }
+                }
+
+                // Obtener el último id_venta y calcular el nuevo id_venta
+                string queryLastIdVenta = "SELECT IFNULL(MAX(id_venta), 0) FROM ventas";
+                MySqlCommand cmdLastIdVenta = new MySqlCommand(queryLastIdVenta, conexion, transaccion);
+                int nuevoIdVenta = Convert.ToInt32(cmdLastIdVenta.ExecuteScalar()) + 1;
+
+                // Procesar la venta y actualizar el stock
+                foreach (DataGridViewRow row in dataGridView2.Rows)
+                {
+                    // Verificar si la fila es una fila nueva o si no tiene valores válidos
                     if (row.IsNewRow || row.Cells["descripcion"].Value == null || row.Cells["cantidad"].Value == null || row.Cells["precio"].Value == null)
                     {
                         continue;
@@ -141,16 +201,47 @@ namespace DairySync
                     int idProducto = ObtenerIdProducto(descripcion);
                     decimal ingresoVenta = cantidad * precio;
 
-                    // Insertar venta en la tabla ventas con la fecha actual
-                    string queryVenta = "INSERT INTO ventas (id_producto, ingreso_venta, cant_vendida, fecha) VALUES (@idProducto, @ingresoVenta, @cantidad, @fecha)";
-                    MySqlCommand cmdVenta = new MySqlCommand(queryVenta, conexion, transaccion);
-                    cmdVenta.Parameters.AddWithValue("@idProducto", idProducto);
-                    cmdVenta.Parameters.AddWithValue("@ingresoVenta", ingresoVenta);
-                    cmdVenta.Parameters.AddWithValue("@cantidad", cantidad);
-                    cmdVenta.Parameters.AddWithValue("@fecha", DateTime.Now); // Asignar la fecha actual
-                    cmdVenta.ExecuteNonQuery();
+                    // Insertar venta en la tabla ventas con el id_venta obtenido
+                    string queryDetalleVenta = "INSERT INTO ventas (id_venta, id_producto, ingreso_venta, cant_vendida, fecha) VALUES (@idVenta, @idProducto, @ingresoVenta, @cantidad, @fecha)";
+                    MySqlCommand cmdDetalleVenta = new MySqlCommand(queryDetalleVenta, conexion, transaccion);
+                    cmdDetalleVenta.Parameters.AddWithValue("@idVenta", nuevoIdVenta);
+                    cmdDetalleVenta.Parameters.AddWithValue("@idProducto", idProducto);
+                    cmdDetalleVenta.Parameters.AddWithValue("@ingresoVenta", ingresoVenta);
+                    cmdDetalleVenta.Parameters.AddWithValue("@cantidad", cantidad);
+                    cmdDetalleVenta.Parameters.AddWithValue("@fecha", DateTime.Now); // Asignar la fecha actual
+                    cmdDetalleVenta.ExecuteNonQuery();
 
-                    // Obtener el stock actual y el stock minimo del producto
+                    // Actualizar stock en la tabla productos
+                    string queryUpdateStock = "UPDATE productos SET stock = stock - @cantidad WHERE id_producto = @idProducto";
+                    MySqlCommand cmdUpdateStock = new MySqlCommand(queryUpdateStock, conexion, transaccion);
+                    cmdUpdateStock.Parameters.AddWithValue("@cantidad", cantidad);
+                    cmdUpdateStock.Parameters.AddWithValue("@idProducto", idProducto);
+                    cmdUpdateStock.ExecuteNonQuery();
+
+                    // Registrar el total cobrado
+                    totalCobrado += ingresoVenta;
+                }
+
+                // Confirmar la transacción
+                transaccion.Commit();
+
+                MessageBox.Show("Venta realizada y stock actualizado correctamente.");
+
+                // Mostrar alerta si hay productos con stock bajo
+                foreach (DataGridViewRow row in dataGridView2.Rows)
+                {
+                    // Verificar si la fila es una fila nueva o si no tiene valores válidos
+                    if (row.IsNewRow || row.Cells["descripcion"].Value == null || row.Cells["cantidad"].Value == null)
+                    {
+                        continue;
+                    }
+
+                    string descripcion = row.Cells["descripcion"].Value.ToString();
+                    int cantidad = Convert.ToInt32(row.Cells["cantidad"].Value);
+
+                    int idProducto = ObtenerIdProducto(descripcion);
+
+                    // Obtener el stock actual y el stock mínimo del producto
                     string queryStock = "SELECT stock, stock_min FROM productos WHERE id_producto = @idProducto";
                     MySqlCommand cmdStock = new MySqlCommand(queryStock, conexion);
                     cmdStock.Parameters.AddWithValue("@idProducto", idProducto);
@@ -165,39 +256,12 @@ namespace DairySync
                     }
                     reader.Close();
 
-                    // Actualizar stock en la tabla productos
-                    string queryUpdateStock = "UPDATE productos SET stock = stock - @cantidad WHERE id_producto = @idProducto";
-                    MySqlCommand cmdUpdateStock = new MySqlCommand(queryUpdateStock, conexion, transaccion);
-                    cmdUpdateStock.Parameters.AddWithValue("@cantidad", cantidad);
-                    cmdUpdateStock.Parameters.AddWithValue("@idProducto", idProducto);
-                    cmdUpdateStock.ExecuteNonQuery();
-
-                    // Verificar si el stock después de la venta esta por debajo del stock mínimo
-                    if (stockActual - cantidad < stockMinimo)
+                    // Verificar si el stock después de la venta está por debajo del stock mínimo
+                    if (stockActual < stockMinimo)
                     {
                         productosBajoStock.Add(descripcion);
                     }
-
-                    // Registrar el total cobrado
-                    totalCobrado += ingresoVenta;
                 }
-
-                // Insertar un único registro en la tabla clientes
-                if (dataGridView2.Rows.Count > 0)
-                {
-                    // Obtener el último id_venta generado
-                    string queryLastIdVenta = "SELECT LAST_INSERT_ID()";
-                    MySqlCommand cmdLastIdVenta = new MySqlCommand(queryLastIdVenta, conexion);
-                    int ultimoIdVenta = Convert.ToInt32(cmdLastIdVenta.ExecuteScalar());
-
-                    string queryInsertCliente = "INSERT INTO clientes (id_venta) VALUES (@idVenta)";
-                    MySqlCommand cmdInsertCliente = new MySqlCommand(queryInsertCliente, conexion, transaccion);
-                    cmdInsertCliente.Parameters.AddWithValue("@idVenta", ultimoIdVenta);
-                    cmdInsertCliente.ExecuteNonQuery();
-                }
-
-                transaccion.Commit();
-                MessageBox.Show("Venta realizada y stock actualizado correctamente.");
 
                 // Mostrar alerta si hay productos con stock bajo
                 if (productosBajoStock.Count > 0)
@@ -209,7 +273,7 @@ namespace DairySync
                 // Limpiar DataGridView2 después de la venta
                 dataGridView2.Rows.Clear();
 
-                // recargar los productos en el DataGrid después de la venta
+                // Recargar los productos en el DataGrid después de la venta
                 insertarProductos();
             }
             catch (Exception ex)
@@ -226,11 +290,16 @@ namespace DairySync
                 {
                     conexion.Close();
                 }
-
-
             }
 
-            }
+
+
+
+
+
+
+
+        }
 
 
 
@@ -249,14 +318,15 @@ namespace DairySync
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.SelectedRows.Count > 0)
+            // Verificar si se ha seleccionado exactamente una fila
+            if (dataGridView1.SelectedRows.Count == 1)
             {
-                //Se almacena la fila seleccionada del dataGridView de la izquierda en la variable selectedRow.
+                // Se almacena la fila seleccionada en la variable selectedRow
                 DataGridViewRow selectedRow = dataGridView1.SelectedRows[0];
 
-                //Se obtienen los valores necesarios de la fila seleccionada
+                // Se obtienen los valores necesarios de la fila seleccionada
                 string nombreProducto = selectedRow.Cells["descripcion"].Value.ToString();
-                int cantidad = 1; 
+                int cantidad = 1;
                 decimal precio = Convert.ToDecimal(selectedRow.Cells["precio"].Value);
 
                 // Añadir fila al dataGridView2
@@ -265,12 +335,16 @@ namespace DairySync
                 // Calcular el total si es necesario
                 CalcularTotal();
             }
+            else if (dataGridView1.SelectedRows.Count > 1)
+            {
+                MessageBox.Show("Selecciona solo una fila.");
+            }
             else
             {
                 MessageBox.Show("Selecciona la fila entera.");
             }
-        
-    }
+
+        }
 
         private void button3_Click(object sender, EventArgs e)
         {
@@ -282,6 +356,17 @@ namespace DairySync
         {
             dataGridView2.Rows.Clear();
             
+        }
+
+        private void button4_Click_1(object sender, EventArgs e)
+        {
+            // Limpiar DataGridView2
+            dataGridView2.Rows.Clear();
+
+            // Reiniciar el total a 0
+            int totalCobrado = 0;
+            label2.Text = $"Total: {totalCobrado:C}"; // Suponiendo que tienes una etiqueta para mostrar el total
+
         }
     } 
             

@@ -35,10 +35,7 @@ namespace DairySync
 
             switch (comboBox1.Text)
             {
-                case "clientes":
-                    query = "SELECT * FROM clientes";
-                    break;
-
+                
                 
                 case "productos":
                     query = "SELECT * FROM productos";
@@ -48,9 +45,7 @@ namespace DairySync
                     query = "SELECT * FROM ventas";
                     break;
 
-                case "registros_venta":
-                    query = "SELECT * FROM registros_venta";
-                    break;
+             
 
                 default:
                     MessageBox.Show("No se seleccionó nada");
@@ -68,11 +63,11 @@ namespace DairySync
 
 
             // Crear el adaptador y llenar el DataTable
-                         MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+            MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
                         
-                            DataTable dataTable = new DataTable();
-                            adapter.Fill(dataTable);
-                            dataGridView1.DataSource = dataTable;
+            DataTable dataTable = new DataTable();
+            adapter.Fill(dataTable);
+            dataGridView1.DataSource = dataTable;
 
             conexionBD.CerrarConexion();
                         
