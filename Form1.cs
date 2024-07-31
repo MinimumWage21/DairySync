@@ -10,12 +10,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
+using BCrypt.Net;
 
 
 
 
 
-    
+
 
 
 
@@ -39,6 +40,18 @@ namespace DairySync
     {
 
 
+        private void RegisterUser(string username, string password)
+        {
+            string hashedPassword = PasswordHashing.HashPassword(password);
+
+            // Aquí deberías agregar código para insertar `username` y `hashedPassword` en la base de datos.
+        }
+
+
+
+
+
+
         public Form1()
         {
             InitializeComponent();
@@ -54,13 +67,24 @@ namespace DairySync
         private void button1_Click(object sender, EventArgs e)
         {
 
-            // Se establece usuario y contraseña para el login, si son correctas se crea el form 2 y se esconde el primero.
+            // Se establece usuario y contraseña para el login, si son correctas se crea el form 3 y se esconde el primero.
 
 
             if (textBox1.Text != "" && textBox2.Text != "")
             {
                 string usuario = textBox1.Text;
                 string password = textBox2.Text;
+                string hashedPassword = PasswordHashing.HashPassword(password);
+
+
+
+
+
+
+
+
+
+
                 ConexionBD.Instancia.ActualizarConexion(usuario, password);
 
                 // Verificar si la conexión fue exitosa
@@ -136,7 +160,7 @@ namespace DairySync
                 }
                 return true;
             }
-            catch (MySqlException ex)
+            catch (MySqlException )
             {
                 // Manejo de excepciones de conexión aquí si es necesario
                 return false;
@@ -162,9 +186,42 @@ namespace DairySync
 
 
     }
-    
-        
-    
+
+
+
+
+
+
+
+
+
+    public static class PasswordHashing
+    {
+        // Método para hashear una contraseña
+        public static string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
+        }
+
+        // Método para verificar una contraseña contra un hash
+        public static bool VerifyPassword(string password, string hashedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        }
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+
 
 
 
