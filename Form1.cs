@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;
@@ -30,12 +31,13 @@ using MySql.Data.MySqlClient;
 namespace DairySync
 {
 
-    
+
 
 
 
     public partial class Form1 : Form
     {
+
 
         public Form1()
         {
@@ -51,31 +53,63 @@ namespace DairySync
 
         private void button1_Click(object sender, EventArgs e)
         {
+
             // Se establece usuario y contraseña para el login, si son correctas se crea el form 2 y se esconde el primero.
-            if (textBox1.Text == "" && textBox2.Text == "")
+
+
+            if (textBox1.Text != "" && textBox2.Text != "")
             {
-                Form3 f3 = new Form3();
-                f3.Show();
-                this.Hide();
-                
+                string usuario = textBox1.Text;
+                string password = textBox2.Text;
+                ConexionBD.Instancia.ActualizarConexion(usuario, password);
+
+                // Verificar si la conexión fue exitosa
+                if (ConexionBD.Instancia.AbrirConexion())
+                {
+                    MessageBox.Show("Conexión exitosa", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    Form3 f3 = new Form3();
+                    f3.Show();
+                    this.Hide();
+                }
+                else
+                {
+                    MessageBox.Show("Error al conectar a la base de datos", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Por favor, ingrese su usuario y contraseña", "Advertencia", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
 
+
+
         }
 
-        private void label3_Click(object sender, EventArgs e)
-        {
-            Form2 f2 = new Form2();
-        }
+
     }
+
+       
+    
     public sealed class ConexionBD
     {
         private static readonly ConexionBD instancia = new ConexionBD();
         private MySqlConnection conexion;
-        private string connectionString = "Server=localhost;Port=3306;Database=dairysync;Uid=root;Pwd=2693a79a42;";
+    private string connectionString;
 
-        //Propiedad publica para instanciar la creacion de la conexion
-        public static ConexionBD Instancia
+
+    public void ActualizarConexion(string usuario, string password)
+    {
+        connectionString = $"Server=localhost;Port=3306;Database=dairysync;Uid={usuario};Pwd={password};";
+        conexion = new MySqlConnection(connectionString);
+    }
+
+
+
+
+    //Propiedad publica para instanciar la creacion de la conexion
+    public static ConexionBD Instancia
         {
             get
             {
@@ -92,11 +126,20 @@ namespace DairySync
 
 
         //Metodo para abrir conexion
-        public void AbrirConexion()
+        public bool AbrirConexion()
         {
-            if (conexion.State != ConnectionState.Open)
+            try
             {
-                conexion.Open();
+                if (conexion.State != ConnectionState.Open)
+                {
+                    conexion.Open();
+                }
+                return true;
+            }
+            catch (MySqlException ex)
+            {
+                // Manejo de excepciones de conexión aquí si es necesario
+                return false;
             }
         }
         //Obtener la conexion
