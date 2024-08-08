@@ -40,14 +40,19 @@ namespace DairySync
     {
 
 
-        private void RegisterUser(string username, string password)
-        {
-            string hashedPassword = PasswordHashing.HashPassword(password);
-
-            // Aquí deberías agregar código para insertar `username` y `hashedPassword` en la base de datos.
-        }
 
 
+
+        
+
+
+
+
+
+
+
+       
+     
 
 
 
@@ -74,8 +79,8 @@ namespace DairySync
             {
                 string usuario = textBox1.Text;
                 string password = textBox2.Text;
-                string hashedPassword = PasswordHashing.HashPassword(password);
 
+                
 
 
 
@@ -87,10 +92,10 @@ namespace DairySync
 
                 ConexionBD.Instancia.ActualizarConexion(usuario, password);
 
-                // Verificar si la conexión fue exitosa
+                // Verificar si la conexion fue exitosa
                 if (ConexionBD.Instancia.AbrirConexion())
                 {
-                    MessageBox.Show("Conexión exitosa", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Conexión exitosa.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     Form3 f3 = new Form3();
                     f3.Show();
@@ -111,11 +116,11 @@ namespace DairySync
 
         }
 
-
+        
     }
 
-       
-    
+
+
     public sealed class ConexionBD
     {
         private static readonly ConexionBD instancia = new ConexionBD();
@@ -195,19 +200,7 @@ namespace DairySync
 
 
 
-    public static class PasswordHashing
-    {
-        // Método para hashear una contraseña
-        public static string HashPassword(string password)
-        {
-            return BCrypt.Net.BCrypt.HashPassword(password);
-        }
-
-        // Método para verificar una contraseña contra un hash
-        public static bool VerifyPassword(string password, string hashedPassword)
-        {
-            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
-        }
+  
 
 
 
@@ -215,10 +208,7 @@ namespace DairySync
 
 
 
-
-
-
-    }
+    
 
 
 

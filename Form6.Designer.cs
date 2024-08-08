@@ -39,12 +39,13 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(397, 866);
+            this.button1.BackColor = System.Drawing.Color.Tan;
+            this.button1.Location = new System.Drawing.Point(382, 887);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(225, 81);
             this.button1.TabIndex = 0;
             this.button1.Text = "Eliminar producto";
-            this.button1.UseVisualStyleBackColor = true;
+            this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // label1
@@ -60,10 +61,10 @@
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            this.textBox1.Location = new System.Drawing.Point(83, 364);
+            this.textBox1.Location = new System.Drawing.Point(296, 227);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(239, 84);
+            this.textBox1.Size = new System.Drawing.Size(214, 45);
             this.textBox1.TabIndex = 2;
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
@@ -71,7 +72,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 25F);
-            this.label2.Location = new System.Drawing.Point(76, 257);
+            this.label2.Location = new System.Drawing.Point(24, 233);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(257, 39);
             this.label2.TabIndex = 3;
@@ -79,19 +80,23 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(49, 866);
+            this.button2.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.button2.Location = new System.Drawing.Point(34, 887);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(232, 81);
             this.button2.TabIndex = 4;
             this.button2.Text = "Volver";
-            this.button2.UseVisualStyleBackColor = true;
+            this.button2.UseVisualStyleBackColor = false;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // dataGridView1
             // 
+            this.dataGridView1.AllowUserToAddRows = false;
+            this.dataGridView1.AllowUserToDeleteRows = false;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(647, 97);
             this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.ReadOnly = true;
             this.dataGridView1.Size = new System.Drawing.Size(1254, 725);
             this.dataGridView1.TabIndex = 5;
             // 
@@ -99,6 +104,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(198)))), ((int)(((byte)(236)))), ((int)(((byte)(249)))));
             this.ClientSize = new System.Drawing.Size(1904, 1041);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.button2);

@@ -52,37 +52,45 @@
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(429, 819);
+            this.button1.BackColor = System.Drawing.Color.Tan;
+            this.button1.Location = new System.Drawing.Point(797, 529);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(495, 188);
+            this.button1.Size = new System.Drawing.Size(455, 98);
             this.button1.TabIndex = 2;
             this.button1.Text = "Vender";
-            this.button1.UseVisualStyleBackColor = true;
+            this.button1.UseVisualStyleBackColor = false;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // dataGridView1
             // 
+            this.dataGridView1.AllowUserToAddRows = false;
+            this.dataGridView1.AllowUserToDeleteRows = false;
             this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView1.Location = new System.Drawing.Point(93, 95);
             this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.ReadOnly = true;
             this.dataGridView1.Size = new System.Drawing.Size(455, 417);
             this.dataGridView1.TabIndex = 3;
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(76, 533);
+            this.button2.BackColor = System.Drawing.Color.Tan;
+            this.button2.Location = new System.Drawing.Point(93, 529);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(472, 189);
+            this.button2.Size = new System.Drawing.Size(455, 98);
             this.button2.TabIndex = 4;
             this.button2.Text = "Añadir a la venta";
-            this.button2.UseVisualStyleBackColor = true;
+            this.button2.UseVisualStyleBackColor = false;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // dataGridView2
             // 
+            this.dataGridView2.AllowUserToAddRows = false;
+            this.dataGridView2.AllowUserToDeleteRows = false;
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView2.Location = new System.Drawing.Point(797, 95);
             this.dataGridView2.Name = "dataGridView2";
+            this.dataGridView2.ReadOnly = true;
             this.dataGridView2.Size = new System.Drawing.Size(669, 417);
             this.dataGridView2.TabIndex = 5;
             // 
@@ -90,7 +98,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F);
-            this.label2.Location = new System.Drawing.Point(1091, 564);
+            this.label2.Location = new System.Drawing.Point(1309, 543);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(56, 24);
             this.label2.TabIndex = 6;
@@ -98,28 +106,31 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(22, 939);
+            this.button3.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.button3.Location = new System.Drawing.Point(93, 667);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(176, 77);
+            this.button3.Size = new System.Drawing.Size(161, 53);
             this.button3.TabIndex = 7;
             this.button3.Text = "Volver";
-            this.button3.UseVisualStyleBackColor = true;
+            this.button3.UseVisualStyleBackColor = false;
             this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(1287, 705);
+            this.button4.BackColor = System.Drawing.Color.Tan;
+            this.button4.Location = new System.Drawing.Point(1326, 597);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(224, 92);
+            this.button4.Size = new System.Drawing.Size(140, 45);
             this.button4.TabIndex = 8;
             this.button4.Text = "Limpiar";
-            this.button4.UseVisualStyleBackColor = true;
+            this.button4.UseVisualStyleBackColor = false;
             this.button4.Click += new System.EventHandler(this.button4_Click_1);
             // 
             // Form7
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(198)))), ((int)(((byte)(236)))), ((int)(((byte)(249)))));
             this.ClientSize = new System.Drawing.Size(1904, 1041);
             this.Controls.Add(this.button4);
             this.Controls.Add(this.button3);

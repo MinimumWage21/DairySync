@@ -14,6 +14,62 @@ namespace DairySync
     public partial class Form3 : Form
     {
         private ConexionBD conexionBD = ConexionBD.Instancia;
+
+        private string ObtenerUsuarioConectado()
+        {
+            string usuario = string.Empty;
+            MySqlConnection conexion = conexionBD.ObtenerConexion();
+            conexionBD.AbrirConexion();
+
+            try
+            {
+                string query = "SELECT USER()"; 
+                using (MySqlCommand cmd = new MySqlCommand(query, conexion))
+                {
+                    object resultado = cmd.ExecuteScalar();
+                    if (resultado != null)
+                    {
+                        usuario = resultado.ToString();
+                        
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al obtener el usuario conectado: " + ex.Message);
+            }
+            finally
+            {
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexionBD.CerrarConexion();
+                }
+            }
+
+            return usuario;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         public Form3()
         {
             InitializeComponent();
@@ -28,13 +84,32 @@ namespace DairySync
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Form4 f4 = new Form4();
-            f4.Show();
-            this.Hide();
 
-            
-            
-            
+            try
+            {
+                // Obtener el usuario conectado
+                string usuarioConectado = ObtenerUsuarioConectado();
+
+                // Verificar si el usuario conectado no es 'vendedor'
+                if (!usuarioConectado.StartsWith("vendedor", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Mostrar el formulario 4
+                    Form4 f4 = new Form4();
+                    f4.Show();
+                    this.Hide(); // Ocultar el formulario actual
+                }
+                else
+                {
+                    MessageBox.Show("Acceso restringido. No tienes permisos para acceder a esta opción.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al verificar el usuario: " + ex.Message);
+            }
+
+
+
 
         }
 

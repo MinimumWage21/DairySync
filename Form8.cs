@@ -14,6 +14,8 @@ namespace DairySync
     public partial class Form8 : Form
     {
         ConexionBD conexionBD = ConexionBD.Instancia;
+       
+
         public Form8()
         {
             InitializeComponent();
@@ -45,6 +47,9 @@ namespace DairySync
                     query = "SELECT * FROM ventas";
                     break;
 
+                case "ventas(descendente)":
+                    query = "SELECT * FROM ventas ORDER BY fecha DESC";
+                    break;
              
 
                 default:
@@ -58,7 +63,7 @@ namespace DairySync
             // Crear el comando SQL con la consulta y la conexion
             MySqlCommand cmd = new MySqlCommand(query, conexion);
 
-            // Abrir la conexión solo si no está abierta
+            // Abrir la conexión solo si no esta abierta
             conexionBD.AbrirConexion();
 
 
@@ -80,6 +85,53 @@ namespace DairySync
         {
             Form4 f4 = new Form4();
             f4.Show(); this.Close();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // Verificar que la caja de texto contiene un numero entero válido
+            if (!int.TryParse(textBox1.Text, out int id_venta))
+            {
+                MessageBox.Show("Por favor, introduce un número entero válido para el ID de la venta.");
+                return;
+            }
+
+            // Abrir la conexion a la base de datos
+            MySqlConnection conexion = conexionBD.ObtenerConexion();
+            conexionBD.AbrirConexion();
+
+            try
+            {
+                // Crear la consulta con un parametro
+                string query = "SELECT * FROM ventas WHERE id_venta = @idVenta";
+
+                // Crear el comando MySqlCommand
+                using (MySqlCommand cmd = new MySqlCommand(query, conexion))
+                {
+                    // Añadir el parámetro a la consulta
+                    cmd.Parameters.AddWithValue("@idVenta", id_venta);
+
+                    // Ejecutar el comando y llenar el DataTable con los resultados
+                    MySqlDataAdapter da = new MySqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+
+                    // Mostrar los resultados en el DataGridView
+                    dataGridView1.DataSource = dt;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al buscar la venta: " + ex.Message);
+            }
+            finally
+            {
+                // Cerrar la conexión si esta abierta
+                if (conexion.State == ConnectionState.Open)
+                {
+                    conexionBD.CerrarConexion();
+                }
+            }
         }
     }
                 

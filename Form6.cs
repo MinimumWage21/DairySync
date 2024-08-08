@@ -39,7 +39,7 @@ namespace DairySync
 
         private void button1_Click(object sender, EventArgs e)
         {
-            // Verificar que la caja de texto contiene un numero entero
+            // Verificar que la caja de texto contiene un número entero
             if (!int.TryParse(textBox1.Text, out int id_producto))
             {
                 MessageBox.Show("Por favor, introduce un número entero válido para el ID del producto.");
@@ -52,8 +52,6 @@ namespace DairySync
 
             try
             {
-                
-
                 // Verificar si el producto existe en la base de datos
                 string queryCheckExistencia = "SELECT COUNT(*) FROM productos WHERE id_producto = @idProducto";
                 MySqlCommand cmdCheckExistencia = new MySqlCommand(queryCheckExistencia, conexion);
@@ -66,10 +64,10 @@ namespace DairySync
                     return;
                 }
 
-                // Eliminar el producto de la base de datos
-                string queryEliminar = "DELETE FROM productos WHERE id_producto = @idProducto";
-                MySqlCommand cmdEliminar = new MySqlCommand(queryEliminar, conexion);
-                cmdEliminar.Parameters.AddWithValue("@idProducto", id_producto);
+                // Eliminar el producto de la base de datos usando el procedimiento almacenado
+                MySqlCommand cmdEliminar = new MySqlCommand("elimProductos", conexion);
+                cmdEliminar.CommandType = CommandType.StoredProcedure;
+                cmdEliminar.Parameters.AddWithValue("id_producto1", id_producto);
                 int filasAfectadas = cmdEliminar.ExecuteNonQuery();
 
                 if (filasAfectadas > 0)
